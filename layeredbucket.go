@@ -102,6 +102,15 @@ func (b *layeredBucket) deleteAll(primary string, deletables chan *Item) bool {
 	return true
 }
 
+func (b *layeredBucket) eachFunc(primary string, cb func(item *Item)) {
+	b.RLock()
+	bucket, exists := b.buckets[primary]
+	b.RUnlock()
+	if exists {
+		bucket.eachFunc(cb)
+	}
+}
+
 func (b *layeredBucket) clear() {
 	b.Lock()
 	defer b.Unlock()

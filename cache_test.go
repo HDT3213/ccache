@@ -1,6 +1,7 @@
 package ccache
 
 import (
+	"sort"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -273,6 +274,26 @@ func (_ CacheTests) ResizeOnTheFly() {
 	Expect(cache.Get("6").Value()).To.Equal(6)
 }
 
+func (_ CacheTests) EachFunc() {
+	cache := New(Configure().MaxSize(3).ItemsToPrune(1))
+	Expect(collectAll(cache)).To.Equal([]string{})
+
+	cache.Set("1", 1, time.Minute)
+	Expect(collectAll(cache)).To.Equal([]string{"1"})
+
+	cache.Set("2", 2, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAll(cache)).To.Equal([]string{"1", "2"})
+
+	cache.Set("3", 3, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAll(cache)).To.Equal([]string{"1", "2", "3"})
+
+	cache.Set("4", 4, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAll(cache)).To.Equal([]string{"2", "3", "4"})
+}
+
 type SizedItem struct {
 	id int
 	s  int64
@@ -292,4 +313,13 @@ func gcCache(cache *Cache) {
 	cache.Stop()
 	cache.gc()
 	cache.restart()
+}
+
+func collectAll(cache *Cache) []string {
+	keys := make([]string, 0, 10)
+	cache.EachFunc(func(i *Item) {
+		keys = append(keys, i.Key())
+	})
+	sort.Strings(keys)
+	return keys
 }

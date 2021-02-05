@@ -164,6 +164,11 @@ func (c *LayeredCache) DeleteFunc(primary string, matches func(key string, item 
 	return c.bucket(primary).deleteFunc(primary, matches, c.deletables)
 }
 
+// Iterates all items that share the same primar ey
+func (c *LayeredCache) EachFunc(primary string, cb func(item *Item)) {
+	c.bucket(primary).eachFunc(primary, cb)
+}
+
 // Clears the cache
 func (c *LayeredCache) Clear() {
 	done := make(chan struct{})

@@ -76,6 +76,12 @@ func (c *Cache) DeleteFunc(matches func(key string, item *Item) bool) int {
 	return count
 }
 
+func (c *Cache) EachFunc(cb func(item *Item)) {
+	for _, b := range c.buckets {
+		b.eachFunc(cb)
+	}
+}
+
 // Get an item from the cache. Returns nil if the item wasn't found.
 // This can return an expired item. Use item.Expired() to see if the item
 // is expired and item.TTL() to see how long until the item expires (which
@@ -210,7 +216,7 @@ func (c *Cache) promote(item *Item) {
 	case c.promotables <- item:
 	default:
 	}
-		
+
 }
 
 func (c *Cache) worker() {

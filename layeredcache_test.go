@@ -1,6 +1,7 @@
 package ccache
 
 import (
+	"sort"
 	"strconv"
 	"sync/atomic"
 	"testing"
@@ -261,12 +262,6 @@ func (_ LayeredCacheTests) ResizeOnTheFly() {
 	Expect(cache.Get("6", "a").Value()).To.Equal(6)
 }
 
-func newLayered() *LayeredCache {
-	c := Layered(Configure())
-	c.Clear()
-	return c
-}
-
 func (_ LayeredCacheTests) RemovesOldestItemWhenFullBySizer() {
 	cache := Layered(Configure().MaxSize(9).ItemsToPrune(2))
 	for i := 0; i < 7; i++ {
@@ -329,6 +324,32 @@ func (_ LayeredCacheTests) ReplaceChangesSize() {
 	checkLayeredSize(cache, 5)
 }
 
+func (_ LayeredCacheTests) EachFunc() {
+	cache := Layered(Configure().MaxSize(3).ItemsToPrune(1))
+	Expect(collectAllLayered(cache, "1")).To.Equal([]string{})
+
+	cache.Set("1", "a", 1, time.Minute)
+	Expect(collectAllLayered(cache, "1")).To.Equal([]string{"a"})
+
+	cache.Set("1", "b", 2, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAllLayered(cache, "1")).To.Equal([]string{"a", "b"})
+
+	cache.Set("1", "c", 3, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAllLayered(cache, "1")).To.Equal([]string{"a", "b", "c"})
+
+	cache.Set("1", "d", 4, time.Minute)
+	time.Sleep(time.Millisecond * 10)
+	Expect(collectAllLayered(cache, "1")).To.Equal([]string{"b", "c", "d"})
+}
+
+func newLayered() *LayeredCache {
+	c := Layered(Configure())
+	c.Clear()
+	return c
+}
+
 func checkLayeredSize(cache *LayeredCache, sz int64) {
 	cache.Stop()
 	Expect(cache.size).To.Equal(sz)
@@ -339,4 +360,13 @@ func gcLayeredCache(cache *LayeredCache) {
 	cache.Stop()
 	cache.gc()
 	cache.restart()
+}
+
+func collectAllLayered(cache *LayeredCache, primary string) []string {
+	keys := make([]string, 0, 10)
+	cache.EachFunc(primary, func(i *Item) {
+		keys = append(keys, i.Key())
+	})
+	sort.Strings(keys)
+	return keys
 }

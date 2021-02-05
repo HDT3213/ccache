@@ -86,6 +86,16 @@ func (b *bucket) deletePrefix(prefix string, deletables chan *Item) int {
 	}, deletables)
 }
 
+func (b *bucket) eachFunc(cb func(item *Item)) {
+	lookup := b.lookup
+	b.RLock()
+	for _, item := range lookup {
+		cb(item)
+	}
+	b.RUnlock()
+
+}
+
 func (b *bucket) clear() {
 	b.Lock()
 	b.lookup = make(map[string]*Item)

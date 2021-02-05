@@ -75,6 +75,10 @@ func (i *Item) shouldPromote(getsPerPromote int32) bool {
 	return i.promotions == getsPerPromote
 }
 
+func (i *Item) Key() string {
+	return i.key
+}
+
 func (i *Item) Value() interface{} {
 	return i.value
 }

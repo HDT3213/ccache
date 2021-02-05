@@ -99,6 +99,9 @@ cache.Delete("user:4")
 ### DeleteFunc
 `DeleteFunc` deletes all items that the provded matches func evaluates to true. Returns the number of keys removed.
 
+### EachFunc
+`EachFunc` calls the supplie function (`func (item *Item)`) for each item in the cache.
+
 ### Clear
 `Clear` clears the cache. If the cache's gc is running, `Clear` waits for it to finish.
 
